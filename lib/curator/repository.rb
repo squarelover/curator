@@ -67,11 +67,15 @@ module Curator
       end
 
       def indexed_fields(*fields)
-        @indexed_fields = fields
+        _indexed_fields.concat fields
 
-        @indexed_fields.each do |field_name|
+        _indexed_fields.each do |field_name|
           _build_finder_methods(field_name)
         end
+      end
+
+      def indexed_field(field, options = {})
+        indexed_fields(field)
       end
 
       def klass
@@ -153,7 +157,7 @@ module Curator
       end
 
       def _indexed_fields
-        @indexed_fields || []
+        @indexed_fields ||= []
       end
 
       def _indexes(object)

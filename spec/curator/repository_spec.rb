@@ -271,6 +271,61 @@ describe Curator::Repository do
       end
     end
 
+    describe "indexed_field" do
+      it "adds find methods for the indexed field" do
+        def_transient_class(:TestModelRepository) do
+          include Curator::Repository
+          attr_reader :id, :some_field
+          indexed_field :some_field
+        end
+
+        def_transient_class(:TestModel) do
+          include Curator::Model
+          attr_reader :id, :some_field
+        end
+
+        model = TestModel.new(:some_field => "Acme Inc.")
+        TestModelRepository.save(model)
+
+        TestModelRepository.find_by_some_field("Acme Inc.").should == [model]
+      end
+
+      it "adds find methods for a second indexed field and the first still exists" do
+        def_transient_class(:TestModelRepository) do
+          include Curator::Repository
+          attr_reader :id, :some_field
+          indexed_field :some_field
+          indexed_field :another_field
+        end
+
+        def_transient_class(:TestModel) do
+          include Curator::Model
+          attr_reader :id, :some_field, :another_field
+        end
+
+        model = TestModel.new(:some_field => "Acme Inc.", :another_field => "Magnetic Bird Seed")
+        TestModelRepository.save(model)
+
+        TestModelRepository.find_by_some_field("Acme Inc.").should == [model]
+        TestModelRepository.find_by_another_field("Magnetic Bird Seed").should == [model]
+      end
+
+      it "calls default implementation if type is blank or :default" do
+        def_transient_class(:TestModelRepository) do
+          include Curator::Repository
+          attr_reader :id, :some_field
+        end
+
+        def_transient_class(:TestModel) do
+          include Curator::Model
+          attr_reader :id, :some_field
+        end
+
+        TestModelRepository.should_receive(:indexed_fields).with(:some_field)
+        TestModelRepository.indexed_field :some_field, :type => :default
+      end
+    end
+
     describe "settings" do
       it "retrieves the settings for its bucket" do
         def_transient_class(:TestModelRepository) do
